@@ -39,17 +39,17 @@
 			progressBar_vram = new ProgressBar();
 			numericUpDown_chunkSize = new NumericUpDown();
 			button_exportWav = new Button();
-			button_stretch = new Button();
-			numericUpDown_factor = new NumericUpDown();
 			button_kernelCompile = new Button();
 			button_kernelLoad = new Button();
 			button_kernelRun = new Button();
 			numericUpDown_kernelParam1 = new NumericUpDown();
 			label_kernelName = new Label();
+			button_stretch = new Button();
+			numericUpDown_factor = new NumericUpDown();
 			((System.ComponentModel.ISupportInitialize) pictureBox_waveform).BeginInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_chunkSize).BeginInit();
-			((System.ComponentModel.ISupportInitialize) numericUpDown_factor).BeginInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_kernelParam1).BeginInit();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_factor).BeginInit();
 			SuspendLayout();
 			// 
 			// listBox_log
@@ -156,28 +156,6 @@
 			button_exportWav.UseVisualStyleBackColor = true;
 			button_exportWav.Click += button_exportWav_Click;
 			// 
-			// button_stretch
-			// 
-			button_stretch.Location = new Point(12, 200);
-			button_stretch.Name = "button_stretch";
-			button_stretch.Size = new Size(65, 23);
-			button_stretch.TabIndex = 11;
-			button_stretch.Text = "Stretch";
-			button_stretch.UseVisualStyleBackColor = true;
-			button_stretch.Click += button_stretch_Click;
-			// 
-			// numericUpDown_factor
-			// 
-			numericUpDown_factor.DecimalPlaces = 10;
-			numericUpDown_factor.Increment = new decimal(new int[] { 5, 0, 0, 196608 });
-			numericUpDown_factor.Location = new Point(83, 200);
-			numericUpDown_factor.Maximum = new decimal(new int[] { 5, 0, 0, 0 });
-			numericUpDown_factor.Minimum = new decimal(new int[] { 1, 0, 0, 65536 });
-			numericUpDown_factor.Name = "numericUpDown_factor";
-			numericUpDown_factor.Size = new Size(90, 23);
-			numericUpDown_factor.TabIndex = 12;
-			numericUpDown_factor.Value = new decimal(new int[] { 1, 0, 0, 0 });
-			// 
 			// button_kernelCompile
 			// 
 			button_kernelCompile.Location = new Point(377, 12);
@@ -229,18 +207,39 @@
 			label_kernelName.TabIndex = 17;
 			label_kernelName.Text = "Kernel name";
 			// 
+			// button_stretch
+			// 
+			button_stretch.Location = new Point(12, 145);
+			button_stretch.Name = "button_stretch";
+			button_stretch.Size = new Size(55, 23);
+			button_stretch.TabIndex = 18;
+			button_stretch.Text = "Stretch";
+			button_stretch.UseVisualStyleBackColor = true;
+			button_stretch.Click += button_stretch_Click;
+			// 
+			// numericUpDown_factor
+			// 
+			numericUpDown_factor.DecimalPlaces = 10;
+			numericUpDown_factor.Location = new Point(73, 145);
+			numericUpDown_factor.Maximum = new decimal(new int[] { 5, 0, 0, 0 });
+			numericUpDown_factor.Minimum = new decimal(new int[] { 5, 0, 0, 131072 });
+			numericUpDown_factor.Name = "numericUpDown_factor";
+			numericUpDown_factor.Size = new Size(90, 23);
+			numericUpDown_factor.TabIndex = 19;
+			numericUpDown_factor.Value = new decimal(new int[] { 1, 0, 0, 0 });
+			// 
 			// WindowMain
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
 			ClientSize = new Size(464, 441);
+			Controls.Add(numericUpDown_factor);
+			Controls.Add(button_stretch);
 			Controls.Add(label_kernelName);
 			Controls.Add(numericUpDown_kernelParam1);
 			Controls.Add(button_kernelRun);
 			Controls.Add(button_kernelLoad);
 			Controls.Add(button_kernelCompile);
-			Controls.Add(numericUpDown_factor);
-			Controls.Add(button_stretch);
 			Controls.Add(button_exportWav);
 			Controls.Add(numericUpDown_chunkSize);
 			Controls.Add(progressBar_vram);
@@ -259,8 +258,8 @@
 			Text = "ManagedCuda-12 CuFFT Tool";
 			((System.ComponentModel.ISupportInitialize) pictureBox_waveform).EndInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_chunkSize).EndInit();
-			((System.ComponentModel.ISupportInitialize) numericUpDown_factor).EndInit();
 			((System.ComponentModel.ISupportInitialize) numericUpDown_kernelParam1).EndInit();
+			((System.ComponentModel.ISupportInitialize) numericUpDown_factor).EndInit();
 			ResumeLayout(false);
 			PerformLayout();
 		}
@@ -278,12 +277,12 @@
 		private ProgressBar progressBar_vram;
 		private NumericUpDown numericUpDown_chunkSize;
 		private Button button_exportWav;
-		private Button button_stretch;
-		private NumericUpDown numericUpDown_factor;
 		private Button button_kernelCompile;
 		private Button button_kernelLoad;
 		private Button button_kernelRun;
 		private NumericUpDown numericUpDown_kernelParam1;
 		private Label label_kernelName;
+		private Button button_stretch;
+		private NumericUpDown numericUpDown_factor;
 	}
 }

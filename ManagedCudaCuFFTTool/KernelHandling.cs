@@ -43,7 +43,7 @@ namespace ManagedCudaCuFFTTool
 			ListBox.SelectedIndex = ListBox.Items.Count - 1;
 		}
 
-		public void CompileKernel(string filepath, bool silent = false, bool export = false)
+		public string CompileKernel(string filepath, bool silent = false, bool export = false)
 		{
 			string kernelName = Path.GetFileNameWithoutExtension(filepath);
 			kernelName = kernelName.Replace("Kernel", "");
@@ -73,7 +73,11 @@ namespace ManagedCudaCuFFTTool
 				File.WriteAllBytes(ptxPath, ptxCode);
 
 				Log("PTX exported to " + ptxPath, "Kernel Compilation", 1);
+
+				return ptxPath;
 			}
+
+			return "";
 		}
 
 		public void LoadKernel(string filepath)
@@ -96,7 +100,7 @@ namespace ManagedCudaCuFFTTool
 
 		public void RunKernelNormalize(List<CudaDeviceVariable<float>> data, float maxAmplitude)
 		{
-			if (Kernel == null || Kernel.KernelName != "Normalize")
+			if (Kernel == null || !Kernel.KernelName.ToLower().Contains("normalize"))
 			{
 				Log("No kernel loaded!", "Kernel Running", 1);
 				return;
@@ -120,11 +124,12 @@ namespace ManagedCudaCuFFTTool
 
 		public void RunKernelStretch(List<CudaDeviceVariable<float2>> data, float factor)
 		{
-			if (Kernel == null || Kernel.KernelName != "Stretch")
+			if (Kernel == null || !Kernel.KernelName.ToLower().Contains("stretch"))
 			{
 				Log("No kernel loaded!", "Kernel Running", 1);
 				return;
 			}
+
 			foreach (var d in data)
 			{
 				// Get data size

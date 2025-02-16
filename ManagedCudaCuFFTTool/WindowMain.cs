@@ -96,9 +96,6 @@ namespace ManagedCudaCuFFTTool
 			// Export button
 			button_exportWav.Enabled = AudioH != null && AudioH.Floats.Length > 0;
 
-			// Stretch button
-			button_stretch.Enabled = AudioH != null && (AudioH.Floats.Length > 0 || CudaH.FloatVariables.Count > 0);
-
 			// Compile button
 			button_kernelCompile.Enabled = CudaH.Ctx != null;
 
@@ -107,6 +104,9 @@ namespace ManagedCudaCuFFTTool
 
 			// Run kernel button
 			button_kernelRun.Enabled = CudaH.Ctx != null && CudaH.KernelH != null && CudaH.KernelH.Kernel != null && (CudaH.FloatVariables.Count > 0 || CudaH.ComplexVariables.Count > 0);
+
+			// Stretch button
+			button_stretch.Enabled = CudaH.Ctx != null && AudioH != null && (AudioH.Floats.Length > 0 || CudaH.FloatVariables.Count > 0);
 		}
 
 
@@ -266,53 +266,6 @@ namespace ManagedCudaCuFFTTool
 			SetWaveform();
 		}
 
-		private void button_stretch_Click(object sender, EventArgs e)
-		{
-			// If no audio or Ctx is null, return
-			if (AudioH == null || CudaH.Ctx == null)
-			{
-				return;
-			}
-
-			// If no data on FloatVariables, push
-			if (CudaH.FloatVariables.Count == 0)
-			{
-				if (AudioH.Floats.Length > 0)
-				{
-					CudaH.PushArraysToCuda(AudioH.MakeChunks((int) numericUpDown_chunkSize.Value));
-					AudioH.Floats = [];
-				}
-				else
-				{
-					Log("No data to stretch", "StretchFFT", 1);
-					return;
-				}
-			}
-
-			// FFT forward
-			CudaH.PerformFFT();
-			Log("Performed FFT", "StretchFFT", 1);
-
-			// Stretch
-			CudaH.StretchComplex((float) numericUpDown_factor.Value);
-			Log("Performed stretch", "StretchFFT", 1);
-
-			// IFFT backward
-			CudaH.PerformIFFT();
-			Log("Performed IFFT", "StretchFFT", 1);
-
-			// Pull from CUDA
-			AudioH.Floats = AudioH.AggregateChunks(CudaH.PullArraysFromCuda<float>());
-			Log("Pulled array from CUDA", "StretchFFT", 1);
-
-			// Normalize
-			AudioH.Normalize();
-			Log("Normalized audio", "StretchFFT", 1);
-
-			// Update GUI
-			SetWaveform();
-		}
-
 		private void button_kernelCompile_Click(object sender, EventArgs e)
 		{
 			// Abort if no Ctx
@@ -366,7 +319,7 @@ namespace ManagedCudaCuFFTTool
 		private void button_kernelRun_Click(object sender, EventArgs e)
 		{
 			// Abort if no Ctx or KernelH
-			if (CudaH.Ctx == null || CudaH.KernelH == null || CudaH.KernelH.Kernel == null || CudaH.FloatVariables.Count == 0)
+			if (CudaH.Ctx == null || CudaH.KernelH == null || CudaH.KernelH.Kernel == null || (CudaH.FloatVariables.Count == 0 && CudaH.ComplexVariables.Count == 0))
 			{
 				return;
 			}
@@ -374,11 +327,13 @@ namespace ManagedCudaCuFFTTool
 			if (CudaH.KernelH.Kernel.KernelName.ToLower().Contains("normalize"))
 			{
 				// Run kernel
+				Log("Started running kernel", CudaH.KernelH.Kernel.KernelName, 1);
 				CudaH.KernelH.RunKernelNormalize(CudaH.FloatVariables, (float) numericUpDown_kernelParam1.Value);
 			}
 			else if (CudaH.KernelH.Kernel.KernelName.ToLower().Contains("stretch"))
 			{
 				// Run kernel
+				Log("Started running kernel", CudaH.KernelH.Kernel.KernelName, 1);
 				CudaH.KernelH.RunKernelStretch(CudaH.ComplexVariables, (float) numericUpDown_kernelParam1.Value);
 			}
 			else
@@ -386,6 +341,52 @@ namespace ManagedCudaCuFFTTool
 				// Log error
 				Log("Kernel not recognized", CudaH.KernelH.Kernel.KernelName, 1);
 			}
+
+			// Update GUI
+			SetWaveform();
+		}
+
+		private void button_stretch_Click(object sender, EventArgs e)
+		{
+			// Abort if no audio or Ctx
+			if (AudioH == null || CudaH.Ctx == null || CudaH.KernelH == null)
+			{
+				return;
+			}
+
+			// If no data on Cuda, move audio to Cuda
+			if (CudaH.FloatVariables.Count == 0)
+			{
+				if (AudioH.Floats.Length == 0)
+				{
+					Log("No audio data", "Stretching", 1);
+					return;
+				}
+
+				CudaH.PushArraysToCuda(AudioH.MakeChunks((int) numericUpDown_chunkSize.Value));
+			}
+
+			// Perform FFT
+			CudaH.PerformFFT();
+
+			// Run kernel
+			string ptxPath = CudaH.KernelH.CompileKernel(Path.Combine(Repopath, "Resources\\Kernels\\C\\StretchKernel.c"), true, true);
+			CudaH.KernelH.LoadKernel(ptxPath);
+			CudaH.KernelH.RunKernelStretch(CudaH.ComplexVariables, (float) numericUpDown_factor.Value);
+
+			// Perform IFFT
+			CudaH.PerformIFFT();
+
+			// Normalize audio
+			ptxPath = CudaH.KernelH.CompileKernel(Path.Combine(Repopath, "Resources\\Kernels\\C\\NormalizeKernel.c"), true, true);
+			CudaH.KernelH.LoadKernel(ptxPath);
+			CudaH.KernelH.RunKernelNormalize(CudaH.FloatVariables, 1.0f);
+
+			// Move audio to Host
+			AudioH.Floats = AudioH.AggregateChunks(CudaH.PullArraysFromCuda<float>());
+
+			// Normalize audio
+			AudioH.Normalize();
 
 			// Update GUI
 			SetWaveform();

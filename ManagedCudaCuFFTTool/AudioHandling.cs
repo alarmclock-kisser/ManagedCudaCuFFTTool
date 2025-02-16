@@ -1,6 +1,7 @@
 ﻿using NAudio.Wave;
 using System.Drawing.Drawing2D;
 using System.Numerics;
+using System.Text;
 
 namespace ManagedCudaCuFFTTool
 {
@@ -176,22 +177,71 @@ namespace ManagedCudaCuFFTTool
 			}
 		}
 
-		public string ExportAudioWav(string filepath)
+		public void ExportAudioWav(string filepath)
 		{
-			// Create new wave file
-			WaveFormat format = new(Samplerate, Bitdepth, Channels);
-			WaveFileWriter writer = new(filepath, format);
+			int sampleRate = Samplerate;
+			int bitDepth = Bitdepth;
+			int channels = Channels;
+			float[] audioData = Floats;
 
-			// Write audio data
-			byte[] bytes = GetBytes();
-			writer.Write(bytes, 0, bytes.Length);
+			// Berechne die tatsächliche Länge der Audiodaten
+			int actualLength = audioData.Length / (bitDepth / 8) / channels;
 
-			// Close writer
-			writer.Close();
+			using (var fileStream = new FileStream(filepath, FileMode.Create))
+			using (var writer = new BinaryWriter(fileStream))
+			{
+				// RIFF header
+				writer.Write(Encoding.ASCII.GetBytes("RIFF"));
+				writer.Write(36 + actualLength * channels * (bitDepth / 8)); // File size
+				writer.Write(Encoding.ASCII.GetBytes("WAVE"));
 
-			return filepath;
+				// fmt subchunk
+				writer.Write(Encoding.ASCII.GetBytes("fmt "));
+				writer.Write(16); // Subchunk1Size (16 for PCM)
+				writer.Write((short) 1); // AudioFormat (1 for PCM)
+				writer.Write((short) channels); // NumChannels
+				writer.Write(sampleRate); // SampleRate
+				writer.Write(sampleRate * channels * (bitDepth / 8)); // ByteRate
+				writer.Write((short) (channels * (bitDepth / 8))); // BlockAlign
+				writer.Write((short) bitDepth); // BitsPerSample
+
+				// data subchunk
+				writer.Write(Encoding.ASCII.GetBytes("data"));
+				writer.Write(actualLength * channels * (bitDepth / 8)); // Subchunk2Size
+
+				// Convert float array to the appropriate bit depth and write to file
+				for (int i = 0; i < actualLength * channels; i++)
+				{
+					float sample = audioData[i];
+					switch (bitDepth)
+					{
+						case 16:
+							var shortSample = (short) (sample * short.MaxValue);
+							writer.Write(shortSample);
+							break;
+						case 24:
+							var intSample24 = (int) (sample * (1 << 23));
+							writer.Write((byte) (intSample24 & 0xFF));
+							writer.Write((byte) ((intSample24 >> 8) & 0xFF));
+							writer.Write((byte) ((intSample24 >> 16) & 0xFF));
+							break;
+						case 32:
+							var intSample32 = (int) (sample * int.MaxValue);
+							writer.Write(intSample32);
+							break;
+						default:
+							throw new ArgumentException("Unsupported bit depth");
+					}
+				}
+			}
 		}
-		
+
+
+
+
+
+
+
 		public Bitmap DrawWaveformSmooth(PictureBox wavebox, long offset = 0, int samplesPerPixel = 1, bool update = false, Color? graph = null)
 		{
 			// Überprüfen, ob floats und die PictureBox gültig sind

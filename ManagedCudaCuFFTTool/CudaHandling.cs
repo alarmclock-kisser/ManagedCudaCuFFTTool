@@ -130,7 +130,7 @@ namespace ManagedCudaCuFFTTool
 			// Update UI elements
 			VramLabel.Text = "VRAM: " + (Ctx.GetTotalDeviceMemorySize() - Ctx.GetFreeDeviceMemorySize()) / 1024 / 1024 + " / " + Ctx.GetTotalDeviceMemorySize() / 1024 / 1024 + " MB";
 			VramPbar.Maximum = (int) (Ctx.GetTotalDeviceMemorySize() / 1024 / 1024);
-			VramPbar.Value = (int) (Ctx.GetTotalDeviceMemorySize() - Ctx.GetFreeDeviceMemorySize()) / 1024 / 1024;
+			VramPbar.Value = (int) ((Ctx.GetTotalDeviceMemorySize() - Ctx.GetFreeDeviceMemorySize()) / 1024 / 1024);
 
 			if (readable)
 			{
